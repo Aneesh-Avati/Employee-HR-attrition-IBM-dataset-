@@ -1,0 +1,666 @@
+---
+title: "project final"
+author: "Aneesh Avati"
+date: "12 December 2018"
+output: word_document
+---
+
+library(knitr)
+```{r}
+
+library(Amelia)
+library(ROCR)
+
+HRA1 <- read.csv("D:/imarticus/Project/Attrition.csv",na.strings=c(""," ","NA"))
+```
+```{r}
+View(HRA1)
+```
+```{r}
+colSums(is.na(HRA1))
+```
+```{r}
+summary(HRA1)
+```
+```{r}
+names(HRA1)
+```
+```{r}
+dim(HRA1)
+```
+
+```{r}
+boxplot(HRA1)
+```
+```{r}
+table(HRA1$Attrition)
+```
+```{r}
+library(ggplot2)
+
+ggplot(HRA1, aes(x=Attrition)) + ggtitle("Attrition") + xlab("Attrition") +
+  geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Count") + coord_flip() + theme_minimal()
+```
+
+```{r}
+HRA1$Education <- as.factor(HRA1$Education)
+HRA1$JobLevel <- as.factor(HRA1$JobLevel)
+HRA1$PerformanceRating <- as.factor(HRA1$PerformanceRating)
+HRA1$StockOptionLevel <- as.factor(HRA1$StockOptionLevel)
+summary(HRA1)
+```
+```{r}
+HRA <- HRA1
+```
+#__________________________________GGPLOT______________________________________
+
+```{r}
+library(magrittr)
+library(ggplot2)
+library(knitr)
+library(ggthemes)
+library(dplyr)
+library(forcats)
+library(corrplot)
+
+```
+
+
+## Distribution of Age
+
+```{r}
+ggplot(HRA,aes(Age))+geom_histogram(binwidth=5,aes(y=..count..),fill="green4")+theme(legend.position="none",plot.title = element_text(hjust=0.5,size=15))+labs(x="Age",y="Count",title="Distribution of Age")
+```
+
+#Age Distribution of people who leave
+```{r}
+ggplot(HRA, aes(Age))+geom_histogram(binwidth=5,aes(y=round(((..count..)/sum(..count..))*100,2)),fill="red")+theme_few()+theme(legend.position="none",plot.title = element_text(hjust=0.5,size=15))+labs(x="Age",y="Percentage",title="Age distribution of people who leave")+scale_y_continuous(limits=c(0,30),breaks=seq(0,30,5))+scale_x_continuous(limits=c(15,60),breaks=seq(15,60,5))
+```
+
+#Age Distribution of people who stay
+```{r}
+ggplot(HRA,aes(Age))+geom_histogram(binwidth=5,aes(y=round(((..count..)/sum(..count..))*100,2)),fill="green4")+theme_few()+theme(legend.position="none",plot.title = element_text(hjust=0.5,size=15))+labs(x="Age",y="Percentage",title="Age distribution of people who Stay")+scale_y_continuous(limits=c(0,30),breaks=seq(0,30,5))+scale_x_continuous(limits=c(15,60),breaks=seq(15,60,5))
+```
+#salary with gender
+```{r}
+ggplot(HRA,aes(Gender,MonthlyIncome,fill=Gender))+geom_boxplot()+theme_few()+theme(legend.position="none",plot.title=element_text(hjust=0.5,size=10))+labs(x="Gender",y="Salary",title="Salary with Gender")+scale_fill_canva(palette="Neon and bold")+coord_flip()
+```
+#Attrition count with gender
+```{r}
+ggplot(HRA,aes(MaritalStatus,..count..,fill=Attrition))+geom_bar(position=position_dodge())+theme_few()+theme(legend.position="bottom",plot.title=element_text(hjust=0.5,size=16))+labs(title="Attrition Count Vs Marital Status")
+```
+
+#Attrition wrt change in Age income and MartialStatus
+```{r}
+ggplot(HRA,aes(Age,MonthlyIncome,size=Age,col=factor(Attrition)))+geom_point(alpha=0.3)+theme_minimal()+facet_wrap(~MaritalStatus)+labs(x="Age",y="MonthlyIncome",title="Attrition Level Comparision ",subtitle="How attrition is observed with change in Age,Income and MaritalStatus",col="Attrition")+theme(legend.position="bottom",plot.title=element_text(size=16,hjust=0.5),plot.subtitle = element_text(size=10))+scale_color_brewer(palette="Set2")
+```
+#Attrition vs department
+```{r}
+ggplot(HRA,aes(x=Department,group=Attrition))+geom_bar(aes(y=..prop..,fill=factor(..x..)),stat="count")+facet_grid(~Attrition)+theme(axis.text.x=element_text(angle=90,vjust=0.5),legend.position="none",plot.title=element_text(size=16,hjust=0.5))+labs(x="Department",y="Percentage",title="Attrition  % Vs Department")+ geom_text(aes(label = scales::percent(..prop..), y = ..prop.. ),stat= "count",vjust =-.5) 
+```
+#department vs attrition %
+```{r}
+ggplot(HRA,aes(x=Attrition,group=Department))+geom_bar(aes(y=..prop..,fill=factor(..x..)),stat="count")+facet_grid(~Department)+theme(axis.text.x=element_text(angle=90,vjust=0.5),legend.position="none",plot.title=element_text(size=16,hjust=0.5))+labs(x="Attrition",y="Percentage",title="Department Vs Attrition %")+ geom_text(aes(label = scales::percent(..prop..), y = ..prop.. ),stat= "count",vjust =-.5) 
+```
+
+## Attrition Vs Distance From Home:
+```{r}
+ggplot(HRA,aes(DistanceFromHome,fill=Attrition))+geom_density(alpha=0.5)+theme_few()+theme(legend.position="bottom",plot.title=element_text(hjust=0.5,size=16))+labs(x="Distance from Home",title="Attrition Vs Distance From Home")+scale_fill_canva(palette="Bold feature colors")
+```
+## Attrition Vs Business Travel
+```{r}
+ggplot(HRA,aes(BusinessTravel,fill=Attrition))+geom_bar(stat="count",aes(y=..count..),position=position_dodge())+theme_few()+theme(legend.position="bottom",plot.title=element_text(hjust=0.5,size=16),axis.text.x = element_text(angle=90))+labs(x="Travel Frequency",y="Count",title="Attrition Vs Business Travel")
+```
+## Attrition Vs Payrates
+```{r}
+g1=ggplot(HRA,aes(Attrition,DailyRate,fill=Attrition))+geom_boxplot()+theme_few()+theme(plot.title=element_text(hjust=0.5),legend.position="bottom")+scale_y_continuous(limits=c(100,1500),breaks=seq(100,1500,100))+coord_flip()+labs(title="Attrition Vs Daily Wages")
+g1
+```
+```{r}
+g2=ggplot(HRA,aes(Attrition,MonthlyIncome,fill=Attrition))+geom_boxplot()+theme_few()+theme(plot.title=element_text(hjust=0.5),legend.position="bottom")+coord_flip()+labs(title="Attrition Vs Monthly Income")
+g2
+```
+```{r}
+g3=ggplot(HRA,aes(Attrition,HourlyRate,fill=Attrition))+geom_boxplot()+theme_few()+theme(plot.title=element_text(hjust=0.5),legend.position="bottom")+coord_flip()+labs(title="Attrition Vs Hourly Wages")
+g3
+```
+### Percentage of salary hike
+ggplot(HRA,aes(PercentSalaryHike,..count..,fill=Attrition))+geom_histogram(binwidth=5)+theme_few()+theme(plot.title=element_text(hjust=0.5),legend.position="none")+labs(title="Histogram of SalaryHike")+scale_y_continuous(limits=c(0,1500),breaks=seq(0,1500,150))
+
+
+#percentage of hike vs Years of experience
+```{r}
+ggplot(HRA,aes(TotalWorkingYears,PercentSalaryHike,col=factor(Attrition),size=PercentSalaryHike))+geom_point(alpha=0.6)+theme(legend.position="bottom",plot.title = element_text(size=15,hjust=0.5))+labs(title="Percentage of Hike Vs Years of Experience",col="Attrition")
+```
+
+# Years at company VS Percentage of hike
+```{r}
+ggplot(HRA,aes(YearsAtCompany,PercentSalaryHike,size=PercentSalaryHike))+geom_point(color="purple",alpha=0.5)+theme_few()+theme(legend.position="none",plot.title=element_text(hjust=0.5,size=16))+labs(title="Years at Company Vs Percentage of Hike")
+```
+
+### Which role is paid more?
+```{r}
+temp=HRA %>% group_by(JobRole) %>% summarise(salary=median(MonthlyIncome)) %>% arrange(desc(salary))
+ggplot(temp,aes(factor(JobRole,levels=JobRole),salary))+geom_bar(stat="identity",fill="gold4")+coord_polar()+labs(x="Job Role",y="Median Salary",title="Who gets more??")+theme_few()+theme(axis.text.x=element_text(vjust=300),plot.title=element_text(hjust=0.5,size=16),axis.text.y=element_blank())
+```
+
+#Attrition by job role
+```{r}
+ggplot(HRA,aes(x=reorder(JobRole,Attrition),y=Attrition)) + geom_bar(stat='identity',alpha=0.5,fill="red") + theme_fivethirtyeight()+coord_flip()+theme(axis.text.x=element_text(angle=0,vjust=0.5),legend.position='bottom',plot.title = element_text(size=12)) +labs(title="Attrition Rate by Job Role")
+```
+
+## Education,EducationField:
+```{r}
+temp= HRA %>% mutate(Education=factor(Education)) %>% mutate(Education=fct_recode(Education,'Below College'='1','College'='2','Bachelor'='3','Master'='4','Doctor'='5'))
+ggplot(temp,aes(Education,fill=Attrition))+geom_bar(stat="count",aes(y=..count..),position=position_dodge())+theme_few()+theme_few()+theme(legend.position="bottom",plot.title=element_text(hjust=0.5,size=16),axis.text.x = element_text(angle=90))+labs(x="Education Level",y="Count",title="Trend of Attrition with Education Level")+scale_fill_canva(palette="Golden afternoon")
+```
+
+# Education levels and field of eduaction
+```{r}
+ggplot(temp,aes(Education,fill=Attrition))+geom_bar(stat="count",aes(y=..count..),position=position_dodge())+theme_few()+theme_few()+theme(legend.position="bottom",plot.title=element_text(hjust=0.5,size=16),axis.text.x = element_text(angle=90))+labs(x="Education Level",y="Count",title="Education levels and field of education")+scale_fill_canva(palette="Unique and striking")+facet_grid(~EducationField)
+```
+
+##Education Vs Satisfaction Levels Vs Attrition:
+```{r}
+temp %>% mutate(JobSatisfaction=factor(JobSatisfaction)) %>% mutate(JobSatisfaction=fct_recode(JobSatisfaction,"Low"="1","Medium"="2","High"="3","Very High"="4")) %>% ggplot(aes(Education,fill=JobSatisfaction))+geom_bar(stat="count",position = position_dodge())+theme_few()+facet_wrap(~Attrition)+theme(legend.position="bottom",plot.title=element_text(hjust=0.5,size=16),axis.text.x = element_text(angle=90,hjust=0.5))+labs(x="Education",y="Satisfaction Count",title="Comparing attrition with Education")
+```
+## Number of companies worked:
+```{r}
+temp = HRA %>% group_by(Attrition,NumCompaniesWorked) %>% tally(sort=TRUE)
+ggplot(temp,aes(NumCompaniesWorked,n,fill=Attrition,label=n))+geom_bar(stat="identity",position=position_dodge())+theme_few()+theme(legend.position="bottom",plot.title=element_text(hjust=0.5,size=16))+labs(x="Number of Companies",y="Count",title="Number of Companies worked")+coord_cartesian(xlim=c(0,9))+scale_x_continuous(breaks=seq(0,9,1))
+```
+
+```{r}
+g1=ggplot(HRA,aes(Attrition,TotalWorkingYears,fill=Attrition))+geom_boxplot()+theme(legend.position="bottom",plot.title=element_text(hjust=0.5))+labs(x="Attrition",y="Years of Experience",title="Attrition trend with number of years of experience")+coord_flip()
+g1
+```
+
+```{r}
+g2=HRA %>% filter(Attrition=="Yes") %>% ggplot(aes(TotalWorkingYears,..count..))+geom_histogram(binwidth=5,alpha=0.8,fill="#575da9")+labs(x="Years of Experience",y="Count",title="Histogram of Years of experience",subtitle="Attrition=Yes")+theme_few()+theme(plot.title=element_text(hjust=0.5),plot.subtitle=element_text(hjust=0.3))
+g2
+```
+
+```{r}
+g3=HRA %>% filter(Attrition=="No") %>% ggplot(aes(TotalWorkingYears,..count..))+geom_histogram(binwidth=5,alpha=0.8,fill="#336b87")+labs(x="Years of Experience",y="Count",title="Histogram of Years of experience",subtitle="Attrition=No")+theme_few()+theme(plot.title=element_text(hjust=0.5),plot.subtitle=element_text(hjust=0.3))
+g3
+```
+
+
+# Attrition Vs Categorical Variables:
+
+#job involvement vs attrition rates
+```{r}
+temp = HRA %>% mutate(JobInvolvement=factor(JobInvolvement)) %>% mutate(JobInvolvement=fct_recode(JobInvolvement,"Low"="1","Medium"="2","High"="3","Very High"="4"))
+ggplot(temp,aes(x=JobInvolvement,group=Attrition))+geom_bar(stat="count",aes(y=..prop..,fill=factor(..x..)))+labs(x="Job Involvement",y="Percentage",title="Job Involvement Vs Attrition Rates")+facet_wrap(~Attrition)+theme_few()+theme(legend.position="none",plot.title=element_text(hjust=0.5,size=14))+geom_text(aes(label=scales::percent(..prop..),y=..prop..),stat="count",vjust=-0.5)
+```
+
+## Job Satisfaction
+```{r}
+temp = HRA %>% mutate(JobSatisfaction=factor(JobSatisfaction)) %>% mutate(JobSatisfaction=fct_recode(JobSatisfaction,"Low"="1","Medium"="2","High"="3","Very High"="4"))
+ggplot(temp,aes(x=JobSatisfaction,group=Attrition))+geom_bar(stat="count",aes(y=..prop..,fill=factor(..x..)))+labs(x="Job Satisfaction",y="Percentage",title="Job Satisfaction Vs Attrition Rates")+facet_wrap(~Attrition)+theme_few()+theme(legend.position="none",plot.title=element_text(hjust=0.5,size=14))+geom_text(aes(label=scales::percent(..prop..),y=..prop..),stat="count",vjust=-0.5)
+```
+## Performance Rating:
+```{r}
+temp= HRA %>% mutate(PerformanceRating=factor(PerformanceRating)) %>% mutate(PerformanceRating=fct_recode(PerformanceRating,"Low"="1","Good"="2","Excellent"="3","Outstanding"="4"))
+ggplot(temp,aes(x=PerformanceRating,group=Attrition))+geom_bar(stat="count",aes(y=..prop..,fill=factor(..x..)))+labs(x="PerformanceRating",y="Percentage",title="Performance Rating Vs Attrition Rates")+facet_wrap(~Attrition)+theme_few()+theme(legend.position="none",plot.title=element_text(hjust=0.5,size=14))+geom_text(aes(label=scales::percent(..prop..),y=..prop..),stat="count",vjust=-0.5)
+```
+
+## Relationship Satisfaction:
+```{r}
+temp= HRA %>% mutate(RelationshipSatisfaction=factor(RelationshipSatisfaction)) %>% mutate(RelationshipSatisfaction=fct_recode(RelationshipSatisfaction,"Low"="1","Medium"="2","High"="3","Very High"="4"))
+ggplot(temp,aes(x=RelationshipSatisfaction,group=Attrition))+geom_bar(stat="count",aes(y=..prop..,fill=factor(..x..)))+labs(x="RelationshipSatisfaction",y="Percentage",title="RelationshipSatisfaction Vs Attrition Rates")+facet_wrap(~Attrition)+theme_few()+theme(legend.position="none",plot.title=element_text(hjust=0.5,size=14))+geom_text(aes(label=scales::percent(..prop..),y=..prop..),stat="count",vjust=-0.5)
+```
+
+## Worklife balance:
+```{r}
+temp= HRA %>% mutate(WorkLifeBalance=factor(WorkLifeBalance)) %>% mutate(WorkLifeBalance=fct_recode(WorkLifeBalance,"Bad"="1","Good"="2","Better"="3","Best"="4"))
+ggplot(temp,aes(x=WorkLifeBalance,group=Attrition))+geom_bar(stat="count",aes(y=..prop..,fill=factor(..x..)))+labs(x="WorkLifeBalance",y="Percentage",title="Worklifebalance Vs Attrition Rates")+facet_wrap(~Attrition)+theme_few()+theme(legend.position="none",plot.title=element_text(hjust=0.5,size=14))+geom_text(aes(label=scales::percent(..prop..),y=..prop..),stat="count",vjust=-0.5)
+```
+## Environment Satisfaction:
+```{r}
+temp= HRA %>% mutate(EnvironmentSatisfaction=factor(EnvironmentSatisfaction)) %>% mutate(EnvironmentSatisfaction=fct_recode(EnvironmentSatisfaction,"Low"="1","Medium"="2","High"="3","Very High"="4"))
+ggplot(temp,aes(x=EnvironmentSatisfaction,group=Attrition))+geom_bar(stat="count",aes(y=..prop..,fill=factor(..x..)))+labs(x="EnvironmentSatisfaction",y="Percentage",title="Environment satisfaction Vs Attrition Rates")+facet_wrap(~Attrition)+theme_few()+theme(legend.position="none",plot.title=element_text(hjust=0.5,size=14))+geom_text(aes(label=scales::percent(..prop..),y=..prop..),stat="count",vjust=-0.5)
+```
+
+## Attrition Vs OverTime:
+```{r}
+ggplot(HRA,aes(x=OverTime,group=Attrition))+geom_bar(stat="count",aes(y=..prop..,fill=factor(..x..)))+labs(x="Overtime",y="Percentage",title="Overtime Vs Attrition Rates")+facet_wrap(~Attrition)+theme_few()+theme(legend.position="none",plot.title=element_text(hjust=0.5,size=14))+geom_text(aes(label=scales::percent(..prop..),y=..prop..),stat="count",vjust=-0.5)
+```
+
+
+#________________________________SMOTE_______________________________
+#Data Imbalanced Smote function
+```{r}
+
+Classcount = table(HRA1$Attrition)
+# Over Sampling
+over = ( (0.6 * max(Classcount)) - min(Classcount) ) / min(Classcount)
+# Under Sampling
+under = (0.4 * max(Classcount)) / (min(Classcount) * over)
+
+over = round(over, 1) * 100
+under = round(under, 1) * 100
+#Generate the balanced data set
+
+library(DMwR)
+HRA = SMOTE(Attrition~., HRA1, perc.over = 210, k = 5, perc.under = 100)
+View(HRA)
+```
+```{r}
+table(HRA$Attrition)
+```
+```{r}
+table(HRA1$Attrition)
+```
+```{r}
+summary(HRA)
+```
+
+
+# let check the output of the Balancing
+```{r}
+
+library(ggplot2)
+
+ggplot(HRA, aes(x=Attrition)) + ggtitle("Attrition") + xlab("Attrition") +
+  geom_bar(aes(y = 100*(..count..)/sum(..count..)), width = 0.5) + ylab("Count") + coord_flip() + theme_minimal()
+
+summary(HRA)
+```
+#_____________________EDA____________________________________________________________
+#converting numeric data into as.factors
+
+#removing insignificant varaibles
+```{r}
+HRA$EmployeeNumber<- NULL
+HRA$StandardHours <- NULL
+HRA$Over18 <- NULL
+HRA$EmployeeCount <- NULL
+
+summary(HRA)
+```
+
+#bivariate analysis
+```{r}
+library(corrplot)
+corrplot(cor(sapply(HRA,as.integer)),method = "pie")
+```
+
+#Feature Engineering
+
+#adding all work related ratings 
+```{r}
+HRA$TotlaSatisfaction <- 
+  as.numeric(HRA$EnvironmentSatisfaction)+
+  as.numeric(HRA$JobInvolvement)+
+  as.numeric(HRA$JobSatisfaction)+
+  as.numeric(HRA$RelationshipSatisfaction)+
+  as.numeric(HRA$WorkLifeBalance)
+
+HRA <- HRA[,-c(9,12,15,23,27)]
+
+summary(HRA)
+```
+```{r}
+HRA$AgeGroup <- as.factor(
+  ifelse(HRA$Age<=24,"Young", ifelse(
+    HRA$Age<=54,"Middle-Age","Adult"
+  ))
+)
+HRA <- HRA[,-c(1)]
+
+table(HRA$AgeGroup)
+```
+
+```{r}
+
+HRA$Incomelevel <- as.factor(
+  ifelse(HRA$MonthlyIncome<ave(HRA$MonthlyIncome),"Low","High")
+)
+table(HRA$Incomelevel)
+```
+```{r}
+summary(HRA)
+```
+
+#Splitting
+```{r}
+library(caTools)
+set.seed(010)
+splitHRA<-sample.split(HRA$Attrition, SplitRatio = 0.80)
+trainHRA<-subset(HRA,splitHRA==T)
+testHRA<-subset(HRA,splitHRA==F)
+summary(trainHRA)
+```
+```{r}
+summary(testHRA)
+
+```
+#_________________________________________DECESION TREES____________________________________
+```{r}
+library(data.table)
+library(dplyr)
+library(DT)
+library(gridExtra)
+library(ggplot2)
+library(caret)
+library(randomForest)
+library(pROC)
+library(e1071)
+library(DMwR)
+library(randomForest)
+library(rpart)
+modelHRADT2 <- rpart(formula = Attrition ~., data=trainHRA)
+plot(modelHRADT2)
+text(modelHRADT2)
+```
+
+
+
+#Decesion Tree validation
+
+```{r}
+
+HRADT2_pred = predict(modelHRADT2, newdata = testHRA, type = 'class')
+```
+#Decesion Teee confusion matrix
+```{r}
+cmHRADT2 = table(HRADT2_pred, testHRA$Attrition)
+cmHRADT2
+```
+```{r}
+library(caret)
+cfHRADT2<-confusionMatrix(HRADT2_pred,testHRA$Attrition)
+cfHRADT2
+```
+#0.827
+```{r}
+Raw.rf.plot<- plot.roc(as.numeric(testHRA$Attrition), as.numeric(HRADT2_pred),lwd=2, type="b",print.auc=TRUE,col ="blue")
+```
+
+#_________________________________RANDOM FOREST_______________________________
+
+#fitting random forest classification to the training set
+```{r}
+library(data.table)
+library(dplyr)
+library(DT)
+library(gridExtra)
+library(ggplot2)
+library(caret)
+library(randomForest)
+library(pROC)
+library(e1071)
+library(DMwR)
+library(randomForest)
+randomforestHRA2 = randomForest(x = trainHRA[-1],y = trainHRA$Attrition, ntree = 50)
+```
+#predicting the test set results
+```{r}
+randomHRA_pred2 = predict(randomforestHRA2,newdata = testHRA[-1])
+```
+#making the confucion matrix
+```{r}
+cmHRArandom2 = table(testHRA$Attrition,randomHRA_pred2)
+cmHRArandom2
+```
+```{r}
+library(caret)
+cfHRARF2<-confusionMatrix(randomHRA_pred2,testHRA$Attrition)
+cfHRARF2
+```
+#0.8571
+
+```{r}
+varImpPlot(randomforestHRA2)
+
+```
+```{r}
+
+Raw.rf.prd <- predict(randomforestHRA2, newdata = testHRA)
+confusionMatrix(testHRA$Attrition, Raw.rf.prd)
+Raw.rf.plot<- plot.roc(as.numeric(testHRA$Attrition), as.numeric(Raw.rf.prd),lwd=2, type="b",print.auc=TRUE,col ="blue")
+
+```
+
+#__________________________XGB__________________________________
+```{r}
+
+library(xgboost)
+library(plyr)
+library(DMwR)
+
+fitControl <- trainControl(method="cv", number = 3,classProbs = TRUE )
+xgbGrid <- expand.grid(nrounds = 500,
+                       max_depth = 20,
+                       eta = .03,
+                       gamma = 0.01,
+                       colsample_bytree = .7,
+                       min_child_weight = 1,
+                       subsample = 0.9
+)
+
+
+HRAXGBmodel <- train(Attrition~., data = trainHRA,
+                     method = "xgbTree"
+                     ,trControl = fitControl
+                     , verbose=0
+                     , maximize=FALSE
+                     ,tuneGrid = xgbGrid
+)
+```
+```{r}
+HRAXGBprd <- predict(HRAXGBmodel,testHRA)
+confusionMatrix(HRAXGBprd, testHRA$Attrition)
+```
+```{r}
+XGB.plot <- plot.roc (as.numeric(testHRA$Attrition), as.numeric(HRAXGBprd),lwd=2, type="b", print.auc=TRUE,col ="blue")
+
+```
+#86.08
+
+#View(HRAXGBprd)
+#View(testHRA$Attrition)
+#testHRA$Attrition <- as.factor(testHRA$Attrition)
+#contrasts(testHRA$Attrition)
+#contrasts(HRAXGBprd)
+
+
+
+#_________________________________LOGISTIC_______________________________________
+
+```{r}
+
+modelHRAL12<-glm(Attrition~.,family=binomial(link="logit"),data=trainHRA)
+summary(modelHRAL12)
+```
+#AIC:699.73
+```{r}
+modelHRAL13<-glm(Attrition~BusinessTravel+DistanceFromHome+JobRole+MaritalStatus+NumCompaniesWorked+OverTime+TotalWorkingYears+YearsAtCompany+YearsInCurrentRole+YearsSinceLastPromotion+TotlaSatisfaction,family=binomial(link="logit"),data=trainHRA)
+summary(modelHRAL13)
+```
+#AIC: 692.95
+
+#testing
+
+#validation of our model using validation set
+# if type = response is not mentioned it will take log(odd(probability)), its for backtransforming it to categorical variable
+```{r}
+fitted.resultsHRAL13 <- predict(modelHRAL12,newdata=testHRA[,-1],type='response')
+```
+#Thresholding
+```{r}
+fitted.resultsHRAL13<- ifelse(fitted.resultsHRAL13 > 0.5,1,0)
+```
+#plotting auc curve
+
+```{r}
+HRALP13 <- predict(modelHRAL12, newdata=testHRA[,-1], type="response")
+HRALpr13 <- prediction(fitted.resultsHRAL13, testHRA[,1])
+HRALprf13 <- performance(HRALpr13, measure = "tpr", x.measure = "fpr")
+plot(HRALprf13)
+```
+```{r}
+
+HRALaucp13 <- performance(HRALpr13, measure = "auc")
+HRALaucp13 <- HRALaucp13@y.values[[1]]
+HRALaucp13
+```
+#0.81482
+
+
+#___________________________SVM______________________________________
+
+```{r}
+
+library(e1071)
+
+# SVM based based on grid scearch
+tunesvmHRA=tune(svm,Attrition~.,
+                data=trainHRA,
+                ranges = list(gamma=2^(-1:1),cost=2^(2:9)))
+summary(tunesvmHRA)
+```
+#model building
+```{r}
+HRAclassifier10<-svm(formula =Attrition~.,data=trainHRA,type = 'C-classification')
+summary(HRAclassifier10)
+```
+```{r}
+HRAclassifier11<-svm(formula =Attrition~.,data=trainHRA,type = 'C-classification',gamma=0.5,cost=4)
+summary(HRAclassifier11)
+```
+```{r}
+HRAclassifier12<-svm(formula =Attrition~.,data=trainHRA,type = 'C-classification',kernel="linear")
+summary(HRAclassifier12)
+```
+```{r}
+HRAclassifier13<-svm(formula =Attrition~.,data=trainHRA,type = 'C-classification',kernel="sigmoid")
+summary(HRAclassifier13)
+```
+```{r}
+HRAclassifier14<-svm(formula =Attrition~.,data=trainHRA,type = 'C-classification',kernel="polynomial")
+summary(HRAclassifier14)
+```
+
+#validation data
+#validation of our model using validation set
+# if type = response is not mentioned it will take log(odd(probability)), its for backtransforming it to categorical variable
+```{r}
+fitted.resultssvmHRA10 <- predict(HRAclassifier10,newdata=testHRA[,-1])
+fitted.resultssvmHRA11 <- predict(HRAclassifier11,newdata=testHRA[,-1])
+fitted.resultssvmHRA12 <- predict(HRAclassifier12,newdata=testHRA[,-1])
+fitted.resultssvmHRA13 <- predict(HRAclassifier13,newdata=testHRA[,-1])
+fitted.resultssvmHRA14 <- predict(HRAclassifier14,newdata=testHRA[,-1])
+```
+
+#Confusion matrix
+```{r}
+svmcfHRA10<-table(fitted.resultssvmHRA10 , testHRA[,1])
+svmcfHRA11<-table(fitted.resultssvmHRA11 , testHRA[,1])
+svmcfHRA12<-table(fitted.resultssvmHRA12 , testHRA[,1])
+svmcfHRA13<-table(fitted.resultssvmHRA13 , testHRA[,1])
+svmcfHRA14<-table(fitted.resultssvmHRA14 , testHRA[,1])
+```
+
+#function for accuracy for logistic radial without cost and gamma
+```{r}
+acc<-function(svmcfHRA10){
+  Totp<-svmcfHRA10[2,1]+svmcfHRA10[2,2]
+  TP<-svmcfHRA10[2,2]
+  c<-TP/Totp
+  c
+}
+acc(svmcfHRA10)
+```
+#86.61
+
+#function for accuracy for logistic radial wit cost and gamma
+```{r}
+acc<-function(svmcfHRA11){
+  Totp<-svmcfHRA11[2,1]+svmcfHRA11[2,2]
+  TP<-svmcfHRA11[2,2]
+  c<-TP/Totp
+  c
+}
+acc(svmcfHRA11)
+```
+#0.6823
+
+
+#function for accuracy for logistic linear
+```{r}
+acc<-function(svmcfHRA12){
+  Totp<-svmcfHRA12[2,1]+svmcfHRA12[2,2]
+  TP<-svmcfHRA12[2,2]
+  c<-TP/Totp
+  c
+}
+acc(svmcfHRA12)
+```
+#0.83831
+
+
+#function for accuracy for logistic sigmoid
+```{r}
+acc<-function(svmcfHRA13){
+  Totp<-svmcfHRA13[2,1]+svmcfHRA13[2,2]
+  TP<-svmcfHRA13[2,2]
+  c<-TP/Totp
+  c
+}
+acc(svmcfHRA13)
+```
+#0.8120
+
+
+#function for accuracy for logistic polynomial
+```{r}
+acc<-function(svmcfHRA14){
+  Totp<-svmcfHRA14[2,1]+svmcfHRA14[2,2]
+  TP<-svmcfHRA14[2,2]
+  c<-TP/Totp
+  c
+}
+acc(svmcfHRA14)
+```
+#0.6782
+
+#plotting auc curve for linear
+```{r}
+HRAsvmp11 <- predict(HRAclassifier10, newdata=testHRA[,-1])
+HRAsvmp11 <- as.numeric(HRAsvmp11)
+testHRA$Attrition <-as.numeric(testHRA$Attrition)
+HRAsvmpr11 <- prediction(HRAsvmp11, testHRA[,1])
+HRAsvmprf11 <- performance(HRAsvmpr11, measure = "tpr", x.measure = "fpr")
+plot(HRAsvmprf11)
+```
+```{r}
+HRAaucsvmp11 <- performance(HRAsvmpr11, measure = "auc")
+HRAaucsvmp11 <- HRAaucsvmp11@y.values[[1]]
+HRAaucsvmp11
+```
+#0.8330
+
+
+
+
+
+
+
+
+#________________________FINAL PLOT_______________________________
+
+par(mfrow=c(2,3))
+plot.roc (as.numeric(HRAtest$Attrition), as.numeric(cmHRADT2), main="DTree",lwd=2, type="b", print.auc=TRUE, col ="brown")
+plot.roc (as.numeric(HRAtest$Attrition), as.numeric(HRAsvmpr11),main="SVM",lwd=2, type="b", print.auc=TRUE, col ="red")
+plot.roc (as.numeric(RFRaw.test.Data$Attrition), as.numeric(randomHRA_pred2), main="Random Forest",lwd=2, type="b", print.auc=TRUE, col ="seagreen4")
+
+
+
+par(mfrow=c(2,3))
+plot((HRAsvmprf11),main="SVM",lwd=2, type="b", print.auc=TRUE, col ="red")
+plot((HRALprf13),,main="LOGISTIC",lwd=2, type="b", print.auc=TRUE, col ="BROWN")
+
+
+
