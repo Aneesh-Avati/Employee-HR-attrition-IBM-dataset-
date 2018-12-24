@@ -1,5 +1,4 @@
-# HR-attrition-
-
+# Employee HR attrition (IBM dataset) 
 Read Me
 1. The dataset is available as attrition.csv. (To be downloaded by students from kaggle.com). URL: https://www.kaggle.com/pavansubhasht/ibm-hr-analytics-attrition-dataset 
 
